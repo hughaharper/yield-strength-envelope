@@ -1,0 +1,460 @@
+c
+      program flex2dvr
+c
+c*****************   main program   ************************
+c
+c Program to compute flexure of a thin plate due to a surface
+c load on a plate of variable rigidity.  Follows the methods of 
+c Sandwell 1984 by recasting the 2D flexure equation as a Fredholm
+c integral equation of the second kind.  This integral equation is
+c then solved iteratively via the method of successive approximation.
+c (possibly making use of the successive over relaxation technique
+c to more quickly achieve convergence).  Once the flexure surface
+c has been satisfactorily determined, gravity from a deflected
+c moho is computed.
+c
+c***********************************************************
+c
+      real*8 kx,ky,kh2,kh,betz
+      real*8 x0,y0,dx,dy
+      real*8 rland,rdum,trans
+c
+c  change ni and nj as needed
+c
+      parameter(ni=2048,nj=2048,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+      character*80 ctopo,crig,cisurf,cwout
+      character*80 cgrav,title
+c
+      common/plate/rlam1,rlam2,rmu1,rmu2,rho,rc,rd,alph,pi
+c
+      real*4 topo(nj*ni),rigid(nj*ni)
+      real*4 fz(nj,ni),fpeek(nj,ni)
+      real*4 D(nj,ni),b(nj,ni),bxy(nj,ni)
+      real*4 wold(nj,ni),wnew(nj,ni)
+      real*4 gz(nj,ni)
+      real*4 grav(nj,ni)
+      real*4 dtx(nj,ni), dtxy(nj,ni), dty(nj,ni) 
+      real*4 wtx(nj,ni), wtxy(nj,ni), wty(nj,ni)
+      real*4 xwind(nj),ywind(ni)
+      complex*8 fkz(nj2,ni),gkz(nj2,ni)
+      complex*8 wconstk(nj2,ni),wpertk(nj2,ni)
+      complex*8 woldk(nj2,ni),wnewk(nj2,ni)
+      complex*8 bk(nj2,ni), bxyk(nj2,ni)
+      complex*8 gravk(nj2,ni)
+      complex*8 dtk(nj2,ni) 
+      complex*8 dtxk(nj2,ni), dtxyk(nj2,ni), dtyk(nj2,ni)
+      complex*8 wtk(nj2,ni) 
+      complex*8 wtxk(nj2,ni), wtxyk(nj2,ni), wtyk(nj2,ni)
+      complex*8 fzval,gzval,tkval,grval,wctemp,wdtemp
+      complex*8 gsurf,gmoho
+      dimension n(2)
+      complex*8 work(nwork)
+      equivalence (fz(1,1),fkz(1,1))
+      equivalence (gz(1,1),gkz(1,1))
+      equivalence (grav(1,1),gravk(1,1))
+      equivalence (b(1,1),bk(1,1))
+      equivalence (bxy(1,1),bxyk(1,1))
+      equivalence (wold(1,1),woldk(1,1))
+      equivalence (wnew(1,1),wnewk(1,1))
+      equivalence (dtx(1,1),dtxk(1,1))
+      equivalence (dtxy(1,1),dtxyk(1,1))
+      equivalence (dty(1,1),dtyk(1,1))
+      equivalence (wtx(1,1),wtxk(1,1))
+      equivalence (wtxy(1,1),wtxyk(1,1))
+      equivalence (wty(1,1),wtyk(1,1))
+c
+      pi=acos(-1.)
+c
+c  zero the arrays fx,fy,fz
+c
+      do 30 i=1,ni
+      do 30 j=1,nj
+      fz(j,i)=0.
+      gz(j,i)=0.
+  30  continue
+c
+c  set the dimensions for fourt
+c
+      n(1)=nj
+      n(2)=ni
+c
+c   get values from command line
+c
+      narg = iargc()
+      if(narg.lt.5) then
+        write(*,'(a)')'  '
+        write(*,'(a)')
+     & 'Usage: flex2d topo.grd rig.grd isurf w.grd grav.grd'
+        write(*,'(a)')
+        write(*,'(a)')
+     &  '       topo.grd - surface topography load [m]'
+        write(*,'(a)')
+     &  '       rig.grd   - variable rigidity parameter (D, Te, or age)'
+        write(*,'(a)')
+     &  '       isurf     - which surface type to model?'
+        write(*,'(a)')
+     &  '                 - (0) land topography load'
+        write(*,'(a)')
+     &  '                 - (1) ocean topography load'
+        write(*,'(a)')
+     &  '                 - (2) tidal loading of floating ice'
+        write(*,'(a)')
+     &  '       w.grd     - output flexural surface [m]'
+        write(*,'(a)')
+     &  '       grav.grd  - output gravity value [mGal]'
+        write(*,'(a)')
+        stop
+      else 
+        call getarg(1,ctopo)
+        call getarg(2,crig)
+        call getarg(3,cisurf)
+        call getarg(4,cwout)
+        call getarg(5,cgrav)
+        read(cisurf,*)isurf
+      endif
+c
+c  set the constants for the surface type
+c
+      if(isurf.eq.0) then
+c
+c  land topography load
+c
+        rhow=0.0
+        rhoc=2800.
+        rhom=3300.
+        young=7.e10
+c
+c   seafloor topography load
+c
+      else if(isurf.eq.1) then
+        rhow=1025.
+        rhoc=2800.
+        rhom=3300.
+        young=7.e10
+c
+c  ice parameters for tidal loading
+c
+      else if(isurf.eq.2) then
+        rhow=0.
+        rhoc=1025
+        rhom=1025.
+        young=3.e9
+      else
+        write(*,*)'Error: Incorrect surface type!'
+        stop
+      endif
+c
+c  set some constants
+c
+      Gcns=2.*pi*6.673e-11
+      g=9.81
+      rnu=0.25
+      rlam1=2*young/5.
+      rmu1=rlam1
+      bulk=rlam1+2*rmu1/3.
+c
+c   set mean ocean depth and moho depth
+c
+      zs=4000.
+      zc=zs+7000.
+c
+c   read the grd files
+c
+      call readgrd(topo,nj1,ni1,y0,x0,
+     +            dy,dx,rdum,title,trim(ctopo)//char(0))
+      if(ni1.gt.ni.or.nj1.gt.nj) then
+        print *,ni1,ni,nj1,nj,y0,x0,dy,dx,rdum
+        write(*,'(a)')' recompile program to increase model dimensions'
+        stop
+      endif
+
+      call readgrd(rigid,nj1,ni1,y0,x0,
+     +            dy,dx,rdum,title,trim(crig)//char(0))
+      if(ni1.gt.ni.or.nj1.gt.nj) then
+        print *,ni1,ni,nj1,nj,y0,x0,dy,dx,rdum
+        write(*,'(a)')' recompile program to increase model dimensions'
+        stop
+      endif
+c
+c  compute the windows
+c
+      nsigy=ni/8
+      do 70 i=1,ni
+      if(i.lt.nsigy) then
+       ywind(i)=0.5*(1.-cos(pi*(i-1)/nsigy))
+      else if(i.gt.(ni-nsigy)) then
+       ywind(i)=0.5*(1.-cos(pi*(ni-i)/nsigy))
+      else
+       ywind(i)=1.
+      endif
+   70 continue
+      nsigx=nj/8
+      do 80 j=1,nj
+      if(j.lt.nsigx) then
+       xwind(j)=0.5*(1.-cos(pi*(j-1)/nsigx))
+      else if(j.gt.(nj-nsigx)) then
+       xwind(j)=0.5*(1.-cos(pi*(nj-j)/nsigx))
+      else
+       xwind(j)=1.
+      endif
+   80 continue
+c              
+c  compute the height and width of the area in m
+c
+      width=nj*dx*1.e3
+      height=abs(ni*dy)*1.e3
+c
+c   compute the mean rigidity of the sub grid
+c
+      Dsum=0.
+      do 104 i=1,ni1
+      do 104 j=1,nj1
+         k=nj1*(i-1)+j
+         Dsum=Dsum+rigid(k)
+  104 continue
+       Dmean=Dsum/(ni1*nj1)
+c
+c  combine the subgrid and mean and recompute the mean
+c
+      Dsum=0.
+      val=0.
+      do 115 i=1,ni
+      do 115 j=1,nj
+         k=nj1*(i-1)+j
+         if(i.le.ni1.and.j.le.nj1) then
+           D(j,i)=rigid(k)
+         else
+           D(j,i)=Dmean
+         endif
+        Dsum=Dsum+D(j,i)
+  115 continue
+      D0=Dsum/(ni*nj)
+      
+      do 117 i=1,ni1
+      do 117 j=1,nj1
+        k=nj1*(i-1)+j
+        val=val+topo(k)/(nj1*ni1)
+  117 continue
+c
+c generate load (demeaned) and apply window
+c generate varying part of D: D(x)=D0+D'(x)
+c generate starting guess for wold
+c
+      do 120 i=1,ni
+      do 120 j=1,nj
+       k=nj1*(i-1)+j
+       fz(j,i)=0.
+       if(i.le.ni1.and.j.le.nj1) then
+        fz(j,i)=(topo(k)-val)
+       endif
+       fz(j,i)=fz(j,i)*xwind(j)*ywind(i)/(ni*nj)
+       D(j,i)=D(j,i)-D0
+       wold(j,i)=0.0
+  120 continue
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c prep iteration by defining convergence tolerance
+c counting variables, and FFTing wold and fz
+c
+      tolerance=1.e-3
+      icount=0
+      icountmax=500
+      wcmag=0.
+      call fourt(wold,n,2,-1,0,work,nwork)
+      call fourt(fz,n,2,-1,0,work,nwork)
+c     
+c to test constant D solution, skip over perturbation stuff      
+c      goto 899
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c  begin Loop 1: b(k)=k^2*w(k)
+c
+
+  409 continue
+      do 255 i=1,ni
+      ky=-(i-1)/height
+      if(i.ge.ni2) ky= (ni-i+1)/height
+      do 255 j=1,nj2
+      kx=(j-1)/width
+      
+      kh2=kx*kx+ky*ky
+      kh=sqrt(kh2)
+      beta=2*pi*kh
+c normalization by number of grid points       
+      bk(j,i)=beta**2*woldk(j,i)/(ni*nj)
+ 255  continue
+
+      do 257 i=1,ni
+      ky=-(i-1)/height
+      if(i.ge.ni2) ky= (ni-i+1)/height
+      do 257 j=1,nj2
+      kx=(j-1)/width
+
+      dtxk(j,i)=(2*pi)*(kx**2)*dtk(j,i)/(ni*nj)
+      dtxyk(j,i)=(2*pi)*(kx*ky)*dtk(j,i)/(ni*nj)
+      dtyk(j,i)=(2*pi)*(ky**2)*dtk(j,i)/(ni*nj)
+    
+      wtxk(j,i)=(2*pi)*(ky**2)*woldk(j,i)/(ni*nj)
+      wtxyk(j,i)=(2*pi)*(kx*ky)*woldk(j,i)/(ni*nj)
+      wtyk(j,i)=(2*pi)*(kx**2)*woldk(j,i)/(ni*nj)
+        
+ 257  continue
+
+c
+c IFFT to get b(x)
+c
+      call fourt(b,n,2,1,-1,work,nwork)
+      call fourt(dtx,n,2,1,-1,work,nwork)
+      call fourt(dtxy,n,2,1,-1,work,nwork)
+      call fourt(dty,n,2,1,-1,work,nwork)
+      call fourt(wtx,n,2,1,-1,work,nwork)
+      call fourt(wtxy,n,2,1,-1,work,nwork)      
+      call fourt(wty,n,2,1,-1,work,nwork)      
+      
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c  begin Loop 2: b(x)*D'(x)
+c
+      do 260 i=1,ni
+      do 260 j=1,nj
+c construct new b matrix here      
+	  b(j,i)=b(j,i)*D(j,i)
+	  bxy(j,i)=dtx(j,i)*wtx(j,i)
+	  bxy(j,i)=bxy(j,i)-2*dtxy(j,i)*wtxy(j,i)
+	  bxy(j,i)=bxy(j,i)+dty(j,i)*wty(j,i)
+  260 continue
+
+c      if(icount.eq.3)goto 899
+c
+c FFT to get back to b(k): this is the value of the Fredholm integral
+c
+      call fourt(b,n,2,-1,0,work,nwork)
+      call fourt(bxy,n,2,-1,0,work,nwork)
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c  begin Loop 3: wnew(k)=T[wold(k)], and calculate convergence criteria
+c
+      wdiff=0.
+      wnmag=0.
+      womag=0.
+      
+      do 275 i=1,ni
+      ky=-(i-1)/height
+      if(i.ge.ni2) ky= (ni-i+1)/height
+      do 275 j=1,nj2
+      kx=(j-1)/width
+      
+      kh2=kx*kx+ky*ky
+      kh=sqrt(kh2)
+      beta=2*pi*kh
+      den=D0*beta**4 + (rhom-rhow)*g
+      
+      if(icount.eq.0)then
+        wconstk(j,i)=-fkz(j,i)/den
+		wcmag=wcmag+(real(wconstk(j,i))**2+aimag(wconstk(j,i))**2)**.5
+      endif
+c
+c first wpert is from karen's notes, second is from Dave's paper
+c
+c      wpertk(j,i)=(beta**2*bk(j,i))/den
+      wpertk(j,i)=(beta**2*bk(j,i)-(bxyk(j,i)*(1-rnu)))/den
+c      wpertk(j,i)=-beta**2*bk(j,i)/den/(2*pi)
+      wnewk(j,i)=wconstk(j,i)-wpertk(j,i)
+      
+      wdtemp=wnewk(j,i)-woldk(j,i)
+      wdiff=wdiff+(real(wdtemp)**2+aimag(wdtemp)**2)**.5
+      wnmag=wnmag+(real(wnewk(j,i))**2+aimag(wnewk(j,i))**2)**.5
+      womag=womag+(real(woldk(j,i))**2+aimag(woldk(j,i))**2)**.5
+      
+ 275  continue
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c test for convergrnce and either loop back or go forward
+c
+      icount=icount+1
+      err=wdiff/wcmag
+      write(*,697)icount,wnmag,err
+c      write(*,698)icount,icount,wnmag,icount,icount-1,wdiff,err
+c      write(*,699)icount,wdiff,wcmag,err
+  697 format(i3,': |wn| =',e11.4,', err =',e11.4)
+  698 format(i3,': |w',i1,'| =',e11.4,', |w',i1,'-w',i1,'| =',e11.4,
+     & ', err =',e11.4)
+  699 format(i3,': wdiff =',e11.4,', wconst =',e11.4,', error =',e11.4)
+      
+      if(err.gt.tolerance.and.icount.lt.icountmax) then
+        do 475 i=1,ni
+        do 475 j=1,nj2
+          woldk(j,i)=wnewk(j,i)
+ 475    continue
+
+      goto 409
+c this is just for debugging
+c      else
+c	do 476 i=1,ni
+c	do 476 j=1,nj2
+c	  wnewk(j,i)=wpertk(j,i)
+c 476    continue
+      endif
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c DEBUGGING TEST: CAN I GET THE RIGHT ANSWER WITH CONSTANT D?
+c
+c  899 continue
+c      do 888 i=1,ni
+c      ky=-(i-1)/height
+c      if(i.ge.ni2) ky= (ni-i+1)/height
+c      do 888 j=1,nj2
+c      kx=(j-1)/width
+c      
+c      kh2=kx*kx+ky*ky
+c      kh=sqrt(kh2)
+c      beta=2*pi*kh
+c      wnewk(j,i)=-fkz(j,i)/(D0*beta**4 + (rhom-rhow)*g)
+c 888  continue
+c      write(*,*)D0
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc  
+
+c
+c compute gravity 
+c
+      do 777 i=1,ni
+      ky=-(i-1)/height
+      if(i.ge.ni2) ky= (ni-i+1)/height
+      do 777 j=1,nj2
+      kx=(j-1)/width
+        gzval=wnewk(j,i)
+        kh2=kx*kx+ky*ky
+        kh=sqrt(kh2)
+        beta=2*pi*kh
+c
+c   upward continue each density interface
+c
+        gsurf=Gcns*gzval*(rhoc-rhow)*exp(-beta*zs)
+	gmoho=Gcns*gzval*(rhom-rhoc)*exp(-beta*zc)
+        gravk(j,i)=(gsurf+gmoho)*1.e5
+	
+ 777  continue
+      call fourt(grav,n,2,1,-1,work,nwork)
+c
+c IFFT to get wnew(x), and grav(x) 
+c
+      call fourt(wnew,n,2,1,-1,work,nwork)
+c  899 continue
+
+c
+c  put the results into the subgrids for output
+c
+      do 901 i=1,ni1
+      do 901 j=1,nj1
+         k=nj1*(i-1)+j
+         topo(k)=wnew(j,i)
+         rigid(k)=grav(j,i)
+ 901  continue
+c
+c  write out flexure and gravity grd files
+c  some parameters must be real*8
+c
+      rland=9998.
+      rdum=9999.
+      call writegrd(topo,nj1,ni1,y0,x0,dx,dy,rland,rdum,
+     +              trim(cwout)//char(0),trim(cwout)//char(0))
+      call writegrd(rigid,nj1,ni1,y0,x0,dx,dy,rland,rdum,
+     +              trim(cgrav)//char(0),trim(cgrav)//char(0))
+      
+      stop
+      end

@@ -1,0 +1,54 @@
+1c1
+<       program fitflex
+---
+>       program fitflexnp
+46,47c46,47
+<       
+< c  geol + constraints 
+---
+> c      
+> c     geol + constraints 
+58,59c58,59
+<       parameter (numbt=3895680,numgr=3895680,numts=1,nc1=30,nc2=9,
+<      + m=7791360, n=2, nc=39)
+---
+>       parameter (numbt=183955,numgr=183955,numts=11,nc1=30,
+>      + nc2=9, m=367910, n=22, nc=39)
+236,242d235
+<         amatr(i,2*numts+1)=xbb(i)*1.0e3/sdbtdat(i)
+<         amatr(i,2*numts+2)=ybb(i)*1.0e3/sdbtdat(i)
+<         amatr(i,2*numts+3)=1.0/sdgrdat(i)
+<         amatr(i,2*numts+4)=0.0
+<         amatr(i,2*numts+5)=0.0
+<         amatr(i,2*numts+6)=0.0
+< 
+251,257d243
+<         amatr(i,2*numts+1)=0.0
+<         amatr(i,2*numts+2)=0.0
+<         amatr(i,2*numts+3)=0.0
+<         amatr(i+numbt,numts+4)=xgr(i)*1.0e3/sdgrdat(i)
+<         amatr(i+numbt,numts+5)=ygr(i)*1.0e3/sdgrdat(i)
+<         amatr(i+numbt,numts+6)=1.0/sdgrdat(i)
+< 
+339a326
+> c	  *** something clumsy about the following loops:
+344,346c331
+< 510     enddo
+<         ptopo(i)=ptopo(i)+(tl(2*numts+1)*xbb(i))
+<      +                   +(tl(2*numts+2)*ybb(i))+(tl(2*numts+3))  
+---
+> 510     enddo  
+349a335
+> c	  *** something clumsy about the following loops:
+355,356d340
+<         pgrav(i)=pgrav(i)+(tl(2*numts+4)*xbb(i))
+<      +                   +(tl(2*numts+5)*ybb(i))+(tl(2*numts+6))
+399d382
+< 
+400a384
+> 	  write(*,*) 'Writing out model vector, should have lines: ',n
+408c392
+<       end
+\ No newline at end of file
+---
+>       end

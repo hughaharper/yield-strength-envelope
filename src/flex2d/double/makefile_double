@@ -1,0 +1,11 @@
+#!/bin/csh	Makefile for flex2dvrd
+
+FFT     = ../../lib/libflex.a
+#FFLAGS= -O -Bstatic -m64
+FFLAGS= -O -m64
+FC = gfortran
+
+flex2dvrd:	flex2dvrd.o
+	$(FC) $(FFLAGS) flex2dvrd.o	\
+		$(FFT) -L$(GMTHOME)/lib -lgmt -L$(NETCDFHOME)/lib -lnetcdf -o ../../bin/flex2dvrd
+	rm *.o

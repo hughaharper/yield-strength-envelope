@@ -1,0 +1,326 @@
+diff --git a/.DS_Store b/.DS_Store
+index 6f78c29..bb583b2 100755
+Binary files a/.DS_Store and b/.DS_Store differ
+diff --git a/bin/flex2dc b/bin/flex2dc
+index e4a6213..2e1ea78 100755
+Binary files a/bin/flex2dc and b/bin/flex2dc differ
+diff --git a/bin/vload b/bin/vload
+index 6b57e91..600e80c 100755
+Binary files a/bin/vload and b/bin/vload differ
+diff --git a/src/.DS_Store b/src/.DS_Store
+index dfd0fec..90733b2 100755
+Binary files a/src/.DS_Store and b/src/.DS_Store differ
+diff --git a/src/age2dsf/age2dsf.c b/src/age2dsf/age2dsf.c
+index 00ab039..9274d22 100755
+--- a/src/age2dsf/age2dsf.c
++++ b/src/age2dsf/age2dsf.c
+@@ -18,37 +18,34 @@ void die (char *s1, char *s2);
+ 
+ char *USAGE = "Usage: age2dsf age_in.grd dsf_out.grd \n \n"
+ "    age_in.grd     - name of input seafloor age file. \n"
+-"    dsf_out.grd    - name of output seafloor depth file \n"
+-"    mt_out.grd     - name of mechanical thickness file \n";
++"    dsf_out.grd    - name of output seafloor depth file \n";
+ 
+ 
+ int
+ main(int argc, char **argv)
+ {
+-     int     i, j, k, m;
+-     int	 xdim=1587, ydim=1800;
++     int     j, k, m;
++     int	 xdim=3900, ydim=3865;
+      float   *age, *dsf, *mt;
+      double  ymin, xmin, yinc, xinc, rland, rdum;
+      double  agept, dsfpt; 
+      
+      unsigned int verbose = 0;
+      
+-     char    agefilename[128], dsffilename[128], mtfilename[128], title[128];
++     char    agefilename[128], dsffilename[128], title[128];
+ 	 
+      Litho lprops;		
+      Litho *lptr = &lprops; /* pointer to litho structure */
+ 
+-	 if (argc < 4) die("\n", USAGE);
++	 if (argc < 3) die("\n", USAGE);
+ 	 
+ 	 /* prepare the output filename */
+ 	 strcpy(agefilename, argv[1]); 
+ 	 strcpy(dsffilename, argv[2]); 
+-	 strcpy(mtfilename, argv[3]); 
+ 	 
+ 	 /* allocate the memory for the arrays */
+ 	 age = (float *) malloc(ydim * xdim * sizeof(float));
+ 	 dsf = (float *) malloc(ydim * xdim * sizeof(float));
+-	 mt = (float *) malloc(ydim * xdim * sizeof(float));
+ 
+ 	 readgrd_(age, &xdim, &ydim, &ymin, &xmin, &yinc, &xinc, &rdum, title, agefilename);
+ 
+@@ -56,6 +53,8 @@ main(int argc, char **argv)
+      set_litho_defaults_(lptr);
+      if(verbose == 1) print_litho_defaults_(lptr);
+      
++     fprintf(stderr,"xdim: %d ydim: %d \n",xdim,ydim);    
++     
+ 	 for (j=0; j<ydim; j++){
+ 	     for (k=0; k<xdim; k++) { 
+               m = j*xdim + k;
+@@ -70,10 +69,8 @@ main(int argc, char **argv)
+                 dsf[m] = (float)dsfpt;
+               }
+               
+-              mt[m] = mechthk_(lptr,&agept);
+-              
+-		}
+-		fprintf(stderr,"Finished row %d \n",j+1);      
++		}  
++	 fprintf(stderr,"row: %d \n",j+1);    
+ 	 }
+ 
+ 
+@@ -81,7 +78,6 @@ main(int argc, char **argv)
+ 	 rdum = -1.e22; 
+ 	 rland  = -1.e22;
+ 	 writegrd_(dsf, &xdim, &ydim, &ymin, &xmin, &yinc, &xinc, &rland, &rdum, title, dsffilename);
+-	 writegrd_(mt, &xdim, &ydim, &ymin, &xmin, &yinc, &xinc, &rland, &rdum, title, mtfilename);
+ 
+      return(EXIT_SUCCESS);
+ }
+diff --git a/src/age2dsf/age2dsf.o b/src/age2dsf/age2dsf.o
+index 89188a2..ab581af 100644
+Binary files a/src/age2dsf/age2dsf.o and b/src/age2dsf/age2dsf.o differ
+diff --git a/src/age2mt/age2mt.c b/src/age2mt/age2mt.c
+index 75fa6a1..6a48a54 100755
+--- a/src/age2mt/age2mt.c
++++ b/src/age2mt/age2mt.c
+@@ -18,7 +18,6 @@ void die (char *s1, char *s2);
+ 
+ char *USAGE = "Usage: age2dsf age_in.grd dsf_out.grd \n \n"
+ "    age_in.grd     - name of input seafloor age file. \n"
+-"    dsf_out.grd    - name of output seafloor depth file \n"
+ "    mt_out.grd     - name of mechanical thickness file \n";
+ 
+ 
+@@ -26,28 +25,26 @@ int
+ main(int argc, char **argv)
+ {
+      int     i, j, k, m;
+-     int	 xdim=1587, ydim=1800;
++     int     xdim=3900, ydim=3865;
+      float   *age, *dsf, *mt;
+      double  ymin, xmin, yinc, xinc, rland, rdum;
+      double  agept, dsfpt; 
+      
+      unsigned int verbose = 0;
+      
+-     char    agefilename[128], dsffilename[128], mtfilename[128], title[128];
++     char    agefilename[128], mtfilename[128], title[128];
+ 	 
+      Litho lprops;		
+      Litho *lptr = &lprops; /* pointer to litho structure */
+ 
+-	 if (argc < 4) die("\n", USAGE);
++	 if (argc < 3) die("\n", USAGE);
+ 	 
+ 	 /* prepare the output filename */
+ 	 strcpy(agefilename, argv[1]); 
+-	 strcpy(dsffilename, argv[2]); 
+-	 strcpy(dsffilename, argv[3]); 
++	 strcpy(mtfilename, argv[2]); 
+ 	 
+ 	 /* allocate the memory for the arrays */
+ 	 age = (float *) malloc(ydim * xdim * sizeof(float));
+-	 dsf = (float *) malloc(ydim * xdim * sizeof(float));
+ 	 mt = (float *) malloc(ydim * xdim * sizeof(float));
+ 
+ 	 readgrd_(age, &xdim, &ydim, &ymin, &xmin, &yinc, &xinc, &rdum, title, agefilename);
+@@ -61,15 +58,6 @@ main(int argc, char **argv)
+               m = j*xdim + k;
+ 		      agept = (double)age[m];	
+               
+-              dsfpt = depth_sflr_(lptr,&agept);
+-              
+-              if (dsfpt <= lptr->dref) {
+-              	dsf[m] = (float)lptr->dref;
+-              }
+-              else {
+-                dsf[m] = (float)dsfpt;
+-              }
+-              
+               mt[m] = mechthk_(lptr,&agept);
+               
+ 		}
+@@ -80,7 +68,6 @@ main(int argc, char **argv)
+ 	 /* write the grd file */ 
+ 	 rdum = -1.e22; 
+ 	 rland  = -1.e22;
+-	 writegrd_(dsf, &xdim, &ydim, &ymin, &xmin, &yinc, &xinc, &rland, &rdum, title, dsffilename);
+ 	 writegrd_(mt, &xdim, &ydim, &ymin, &xmin, &yinc, &xinc, &rland, &rdum, title, mtfilename);
+ 
+      return(EXIT_SUCCESS);
+diff --git a/src/curv2rigid/curv2rigid b/src/curv2rigid/curv2rigid
+deleted file mode 100755
+index a739b19..0000000
+Binary files a/src/curv2rigid/curv2rigid and /dev/null differ
+diff --git a/src/curv2rigid/curv2rigid.c b/src/curv2rigid/curv2rigid.c
+index b03d57f..02fffc8 100755
+--- a/src/curv2rigid/curv2rigid.c
++++ b/src/curv2rigid/curv2rigid.c
+@@ -15,7 +15,7 @@ double temp_plt_(Litho *l, double *z, double *age);
+ double depth_sflr_(Litho *l, double *age);
+ double ductile_(Litho *l, double *temp, unsigned int *dusw);
+ double mechthk_(Litho *l, double *age);
+-double yse_moment_(Litho *l, double *age, int *zpts, double *curv, double *ival1, \
++double yse_moment_(Litho *l, int *zpts, double *age, double *curv, double *ival1, \
+                    double *ival2, double *zmt, double *npstr, unsigned int *wcsw, \
+                    unsigned int *znsw, int *rfiter, unsigned int *vsw);
+ void die (char *s1, char *s2);
+@@ -33,7 +33,7 @@ int
+ main(int argc, char **argv)
+ {
+      int     i, j, k, m, zid;
+-     int	 xdim=1587, ydim=1800, nz=100;
++     int     xdim=1950, ydim=1955, nz=100;
+      float   *age, *curv, *rigid, *bmo, *zyield, *mt;
+      double  ymin, xmin, yinc, xinc, rland, rdum;
+      double  ival1, ival2, z, zmt, zp, dz, dsf, zmax;
+diff --git a/src/curv2rigid/curv2rigid.o b/src/curv2rigid/curv2rigid.o
+index bc39a37..cbf3e74 100644
+Binary files a/src/curv2rigid/curv2rigid.o and b/src/curv2rigid/curv2rigid.o differ
+diff --git a/src/flex2d/flex2dc.f b/src/flex2d/flex2dc.f
+index 32bc819..23e363e 100755
+--- a/src/flex2d/flex2dc.f
++++ b/src/flex2d/flex2dc.f
+@@ -22,7 +22,7 @@ c
+ c  change ni and nj as needed
+ c
+       parameter(ni=2048,nj=2048,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+-      character*80 ctopo,crig,cisurf,cwout
++      character*80 cvload,crig,cisurf,cwout
+       character*80 cgrav,ccurv,title
+       
+       real*4 vload(nj*ni),rigid(nj*ni),curv(nj*ni)
+@@ -89,10 +89,10 @@ c
+       if(narg.lt.6) then
+         write(*,'(a)')'  '
+         write(*,'(a)')
+-     & 'Usage: flex2dc topo.grd rig.grd isurf w.grd curv.grd grav.grd'
++     & 'Usage: flex2dc vload.grd rig.grd isurf w.grd curv.grd grav.grd'
+         write(*,'(a)')
+         write(*,'(a)')
+-     &  '       topo.grd - surface topography load [m]'
++     &  '       vload.grd - surface topography load [m]'
+         write(*,'(a)')
+      &  '       rig.grd   - variable rigidity parameter (D, Te, or age)'
+         write(*,'(a)')
+@@ -112,7 +112,7 @@ c
+         write(*,'(a)')
+         stop
+       else 
+-        call getarg(1,ctopo)
++        call getarg(1,cvload)
+         call getarg(2,crig)
+         call getarg(3,cisurf)
+         call getarg(4,cwout)
+@@ -167,8 +167,8 @@ c
+ c
+ c   read the grd files
+ c
+-      call readgrd(topo,nj1,ni1,y0,x0,
+-     +            dy,dx,rdum,title,trim(ctopo)//char(0))
++      call readgrd(vload,nj1,ni1,y0,x0,
++     +            dy,dx,rdum,title,trim(cvload)//char(0))
+       if(ni1.gt.ni.or.nj1.gt.nj) then
+         print *,ni1,ni,nj1,nj,y0,x0,dy,dx,rdum
+         write(*,'(a)')' recompile program to increase model dimensions'
+@@ -205,6 +205,7 @@ c
+        xwind(j)=1.
+       endif
+    80 continue
++
+ c              
+ c  compute the height and width of the area in m
+ c  and also the sigma smoothing factor for the perturbation
+@@ -217,7 +218,7 @@ c
+ c  compute the windows for subgrid
+ c
+       swy=ni1/8.
+-      do 104 i=1,ni1
++      do 104 i=1,ni
+       if(i.lt.swy) then
+        sywind(i)=0.5*(1.-cos(pi*(i-1)/swy))
+       else if(i.gt.(ni1-swy)) then
+@@ -227,7 +228,7 @@ c
+       endif
+   104 continue
+       swx=nj1/8.
+-      do 105 j=1,nj1
++      do 105 j=1,nj
+       if(j.lt.swx) then
+        sxwind(j)=0.5*(1.-cos(pi*(j-1)/swx))
+       else if(j.gt.(nj1-swx)) then
+@@ -331,28 +332,34 @@ c
+   
+       vlmean=vlsum/(nj1*ni1)
+ 
++
++	  vlsum=0.0
+       do 118 i=1,ni1
+       do 118 j=1,nj1
+         k=nj1*(i-1)+j
+         vload(k)=(vload(k)-vlmean)*sywind(i)*sxwind(j)
++c		vload(k)=(vload(k))*sywind(i)*sxwind(j)
++		vlsum=vlsum+vload(k)
+   118 continue
+   
++  	  vlmean=vlsum/(nj1*ni1)
+ c
+ c generate load (demeaned) and apply window
+ c generate varying part of D: D(x)=D0+D'(x)
+ c generate starting guess for wold
+-c need to reverse the sign of fz so positive load produces pos. topo.
++c need to reverse the sign of fz so positive load produces pos. topo
+ c
+       call fourt(wold,n,2,-1,0,work,nwork)
+       
+       do 120 i=1,ni
+       do 120 j=1,nj
+        k=nj1*(i-1)+j
+-       fz(j,i)=0.
++       fz(j,i)=0.0
+        if(i.le.ni1.and.j.le.nj1) then
+-       fz(j,i)=-vload(k)/(ni*nj)
++c       fz(j,i)=-(vload(k))*xwind(j)*ywind(i)/(ni*nj)
++       fz(j,i)=-(vload(k)-vlmean)*xwind(j)*ywind(i)/(ni*nj)
+        endif
+-c      D(j,i)=(D(j,i))*xwind(j)*ywind(i)
++       D(j,i)=(D(j,i))*xwind(j)*ywind(i)
+        woldk(j,i)=cmplx(0.,0.)
+   120 continue
+ c
+@@ -370,6 +377,7 @@ c
+       wcmag=0.
+ 
+       call fourt(fz,n,2,-1,0,work,nwork)
++      fkz(1,1)=cmplx(0.,0.)
+ c     
+ c to test constant D solution, skip over perturbation stuff      
+ c      goto 899
+diff --git a/src/vload/vload.f b/src/vload/vload.f
+index 0020e34..e92574b 100755
+--- a/src/vload/vload.f
++++ b/src/vload/vload.f
+@@ -24,9 +24,10 @@ c*******************************************************************
+ c     parameter(ni=2048,nj=2048,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+ c     parameter(ni=1800,nj=1500,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+ c     parameter(ni=1587,nj=1800,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+-	  parameter(ni=718,nj=1200,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
++c     parameter(ni=718,nj=1200,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
++      parameter(ni=1950,nj=1955,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+ c     parameter(ni=1822,nj=1800,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+-c      parameter(ni=2,nj=2048,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
++c     parameter(ni=2,nj=2048,nwork=32768,nj2=nj/2+1,ni2=ni/2+1)
+ c
+ c  parameter   description
+ c  ni          # of rows in load grid

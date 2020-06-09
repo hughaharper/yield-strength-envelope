@@ -1,0 +1,10 @@
+#!/bin/csh	Makefile for flex2dvr
+
+FFT     = ../../lib/libflex.a
+FFLAGS= -O -Bstatic -m64
+FC = gfortran
+
+flex2dvr:	flex2dvr.o
+	$(FC) $(FFLAGS) flex2dvr.o	\
+		$(FFT) -L$(GMTHOME)/lib -lgmt -L$(NETCDFHOME)/lib -lnetcdf -o ../../bin/flex2dvr
+	rm *.o

@@ -1,0 +1,46 @@
+Notes on workflow for trench flexure for inverse model
+
+1) prepare the data files
+- set bounds
+- extract topo grav, and agea
+- map age into Mercator grid
+
+2) make one vload file for all segments
+
+3) set plate curvature grid to all zero
+
+4) compute rigidity from curvarure and age
+
+5) make a model using vload and rigidity to get W, curv,  and grav
+
+6) exit after some number of iterations
+
+7) go to 4)
+
+Notes on doing inverse problem
+
+1) prepare the data files
+- set bounds
+- extract topo grav, and agea
+- map age into Mercator grid
+
+2) make a unit vload and a unit mload for each segment
+   2*num_segment vload files (vload)
+
+3) set plate curvature grid to all zero
+
+4) compute rigidity from curvarure and age (curv2rigid)
+
+5) make 2 * num_seg deflection models for W, curv, and grav (flex2d)
+
+6) sample every model at locations of W_data and grav_data (grdtrack)
+
+7) invert for the V and M of each segment (invert)
+
+8) take this best set of V and M and, compute combined vload (vload)
+
+9) make a combined model using vload and rigidity to get W, curv, and grav (flex2d)
+
+10) go to 4 to recompute rigidity grid from combined curvature and age
+
+11) exit after some number of iterations
