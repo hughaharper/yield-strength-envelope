@@ -15,43 +15,29 @@ dat=load(file);
 z=-dat(:,1);
 temp=dat(:,2);
 pres=dat(:,3);
-estr=dat(:,4);
-ystr=dat(:,5);
-dstr=dat(:,6);
+ystrp=dat(:,4);
+ystrm=dat(:,5);
+estr=dat(:,6);
 
 
 figure(1)
 
-subplot(4,2,1)
+subplot(2,2,1)
 plot(temp,z);
 xlabel('Temperature (deg C)');
 ylabel('Depth (km)');
 title('Temperature Profile');
 
-subplot(4,2,2)
+subplot(2,2,2)
 plot(pres,z);
 xlabel('Overburden Pressure (MPa)');
 ylabel('Depth (km)');
 title('Pressure Profile');
 
-subplot(4,2,3:4)
-plot(estr,z);
+subplot(2,2,3:4)
+plot(ystrp,z,ystrm,z,estr,z);
 xlabel('Differential Stress (MPa)');
 ylabel('Depth (km)');
 ylim([-80 0]);
 title('Yield Stress Profile');
 
-
-subplot(4,2,5:6)
-plot(ystr,z);
-xlabel('Differential Stress (MPa)');
-ylabel('Depth (km)');
-ylim([-80 0]);
-title('Elastic Stress Profile');
-
-subplot(4,2,7:8)
-plot(dstr,z);
-xlabel('Differential Stress (MPa)');
-ylabel('Depth (km)');
-ylim([-80 0]);
-title('Differential Stress Profile');
