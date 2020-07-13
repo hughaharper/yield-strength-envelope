@@ -7,10 +7,10 @@ void set_litho_defaults_(Litho *litho)
 {
 
 litho->ts      = 0.;      /*  surface temp */
-litho->tm      = 1450.;   /*  mantle temperature, from Mueller and Phillips */
-litho->diff    = 1.2e-6;   /*  thermal diffusivity */
+litho->tm      = 1365.;   /*  mantle temperature, from Mueller and Phillips */
+litho->diff    = 8.0e-7;   /*  thermal diffusivity */
 litho->cp      = 1172.;   /*  heat capacity at constant pressure */
-litho->dp      = 9.5e4;  /*  plate thickness */
+litho->dp      = 1.25e5;  /*  plate thickness */
 
 /*parameters for thermal subsidence, sediment loading, and pressure models */
 litho->gbar    = 9.81;    /*  gravitational acceleration */
@@ -19,7 +19,7 @@ litho->alph    = 3.1e-5;  /*  volume expansion coeff */
 litho->rw      = 1025;    /*  water density */
 litho->rs      = 2300;    /*  sediment density */
 litho->rc      = 2800;    /*  crustal density */
-litho->rm      = 3300;    /*  mantle density */
+litho->rm      = 3200;    /*  mantle density */
 litho->dw      = 4100;    /*  mean seafloor depth */
 litho->dc      = 6000;    /*  crustal thickness */
 litho->ds      = 500.;    /*  sediment thickness */
@@ -32,7 +32,7 @@ litho->byergst = 5.67e7;  /*  tension, byerlee coeff. for cohesion term, for ver
 litho->byergpc = 3.68;    /*  compression, byerlee coeff. for pressure term, for vert. stress > 113.2 MPa */
 litho->byerlpc = 2.12;    /*  compression, byerlee coeff. for pressure term, for vert. stress < 113.2 MPa */    
 litho->byerlsc = 1.766e8; /*  compression, byerlee coeff. for cohesion term, for vert. stress < 113.2 MPa */
-litho->phyd    = 0.0;     /*  pore pressure level */
+litho->phyd    = 1.0;     /*  pore pressure level */
 
 /* elastic parameters */
 litho->young   = 6.5e10;   /*  young's modulus. */
