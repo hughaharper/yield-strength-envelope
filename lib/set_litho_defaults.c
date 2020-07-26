@@ -7,32 +7,32 @@ void set_litho_defaults_(Litho *litho)
 {
 
 litho->ts      = 0.;      /*  surface temp */
-litho->tm      = 1365.;   /*  mantle temperature, from Mueller and Phillips */
-litho->diff    = 8.0e-7;   /*  thermal diffusivity */
+litho->tm      = 1350.;   /*  mantle temperature, from Chen & Morgan */
+litho->diff    = 8.0e-7;  /*  thermal diffusivity */
 litho->cp      = 1172.;   /*  heat capacity at constant pressure */
 litho->dp      = 1.25e5;  /*  plate thickness */
 
 /*parameters for thermal subsidence, sediment loading, and pressure models */
 litho->gbar    = 9.81;    /*  gravitational acceleration */
 litho->dref    = 2600.;   /*  ridge crest depth */
-litho->alph    = 3.1e-5;  /*  volume expansion coeff */
+litho->alph    = 3.2e-5;  /*  volume expansion coeff */
 litho->rw      = 1025;    /*  water density */
 litho->rs      = 2300;    /*  sediment density */
-litho->rc      = 2800;    /*  crustal density */
-litho->rm      = 3200;    /*  mantle density */
+litho->rc      = 2900;    /*  crustal density */
+litho->rm      = 3300;    /*  mantle density */
 litho->dw      = 4100;    /*  mean seafloor depth */
 litho->dc      = 6000;    /*  crustal thickness */
 litho->ds      = 500.;    /*  sediment thickness */
 
 /* parameters for brittle yield strength envelope
    assumes optimal fault orientations */
-litho->byerlpt = 0.786;   /*  tension, byerlee coeff. for pressure term, for vert. stress > 529.9 MPa */ 
+litho->byerlpt = 0.786;   /*  tension, byerlee coeff. for pressure term, for vert. stress > 529.9 MPa */
 litho->byergpt = 0.679;   /*  tension, byerlee coeff. for pressure term, for vert. stress < 529.9 MPa */
 litho->byergst = 5.67e7;  /*  tension, byerlee coeff. for cohesion term, for vert. stress < 529.9 MPa */
 litho->byergpc = 3.68;    /*  compression, byerlee coeff. for pressure term, for vert. stress > 113.2 MPa */
-litho->byerlpc = 2.12;    /*  compression, byerlee coeff. for pressure term, for vert. stress < 113.2 MPa */    
+litho->byerlpc = 2.12;    /*  compression, byerlee coeff. for pressure term, for vert. stress < 113.2 MPa */
 litho->byerlsc = 1.766e8; /*  compression, byerlee coeff. for cohesion term, for vert. stress < 113.2 MPa */
-litho->phyd    = 1.0;     /*  pore pressure level */
+litho->phyd    = 1.;     /*  pore pressure level */
 
 /* elastic parameters */
 litho->young   = 6.5e10;   /*  young's modulus. */
@@ -40,7 +40,7 @@ litho->pois    = 0.25;    /*  poisson's ratio. */
 litho->telas   = 600;     /*  temperature at base of elastic layer */
 
 /* parameters for ductile flow law */
-litho->eps1    = 1.e-16;  /*  strain rate */
+litho->eps1    = 1.e-14;  /*  strain rate */
 litho->str_exp = 3.0;     /*  stress exponent */
 litho->str_pow = 7.e-14;  /*  stress amplitude factor for power law */
 litho->str_dor = 8.5e9;   /* stress constant for Dorn law */
@@ -50,7 +50,7 @@ litho->qd      = 5.49e5;  /*  activation energy for Dorn */
 
 /* parameters to be solved for when finding effective rigidity */
 litho->zmt     = -1.0;
-litho->zn      = -1.0; 
+litho->zn      = -1.0;
 litho->zy      = 1000;    /*  depth to top of elastic layer. */
 }
 
@@ -75,7 +75,7 @@ void print_litho_defaults_(Litho *litho)
         fprintf(stderr," byerlpt  = %g \n",litho->byerlpt );
         fprintf(stderr," byergpt  = %g \n",litho->byergpt );
         fprintf(stderr," byergst  = %g \n",litho->byergst );
-        fprintf(stderr," byergpc  = %g \n",litho->byergpc );        
+        fprintf(stderr," byergpc  = %g \n",litho->byergpc );
         fprintf(stderr," byerlpc  = %g \n",litho->byerlpc );
         fprintf(stderr," byerlsc  = %g \n",litho->byerlsc );
         fprintf(stderr," phyd     = %g \n",litho->phyd    );

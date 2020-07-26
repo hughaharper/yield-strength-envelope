@@ -1,7 +1,7 @@
 #
 # creates fftfault library from C and fortran code
 #
-INC = -I$(GMTHOME)/include -I$(GMTHOME)/include/gmt -I$(NETCDFHOME)/include -I../include
+INC = -I/usr/local/include -I/usr/local/include/gmt -I/usr/local/include -I../include
 CFLAGS = $(INC)  -O2 -m64
 FFLAGS =  -O3 -m64
 FC = gfortran
