@@ -18,10 +18,18 @@ int main (int argc, char **argv)
   double age,z,dz,dsf,temp,obp,zp,zmt,bystr,dustr;
   double ystrp,ystrm;
 
+  double tc = 7.e3; /* 7 km crustal thickness */
+  /* flow law for wet olivine, Karato et al. 1986 */
+  /* change this to flow law for Gabbro */
+  double wo_exp = 3.0;
+  double wo_pow = 1.9e-15;
+  double wo_qp = 4.2e5;
+
   /* switches */
   unsigned int wcsw = 1; /* don't include water column overburden = 0, include = 1 */
   unsigned int bysw; /* compression = 0, tension = 1 */
   unsigned int dusw; /* dorn law = 0, power law = 1 */
+  unsigned int reset = 0; /* for switching from crust to mantle */
 
   Litho l;
   Litho *lptr = &l; /* pointer to litho structure */
@@ -41,11 +49,29 @@ int main (int argc, char **argv)
 
   zp = lptr->dp;
   dz = zp/nz;
-  dusw = 0;
+  dusw = 1;
   zmt = zp; /* Mechanical thickness is plate thickness initially*/
+
+  /* adjust parameters for the crust */
+  lptr->str_exp = wo_exp;
+  lptr->str_pow = wo_pow;
+  lptr->qp = wo_qp;
+  lptr->diff = 3*lptr->diff;
 
   for(j=0;j<nz;j++) {
     z=((double)j+0.5)*dz;
+
+    if (z > tc && reset == 0) {
+      fprintf(stderr, "reset defaults at depth: %lf \n",z);
+      /* power law flow for dry olivine, Karato et al., 1986 */
+      set_litho_defaults_(lptr);
+      lptr->str_exp = 3.5;
+      lptr->str_pow = 2.4e-16;
+      lptr->qp = 5.40e5;
+      dusw = 1;
+      reset = 1;
+    }
+
     temp=temp_plt_(lptr,&z,&age);
     obp=pressure_(lptr,&z,&dsf,&wcsw);
     dustr=ductile_(lptr,&temp,&dusw);

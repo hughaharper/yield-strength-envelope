@@ -42,10 +42,10 @@ litho->telas   = 600;     /*  temperature at base of elastic layer */
 /* parameters for ductile flow law */
 litho->eps1    = 1.e-14;  /*  strain rate */
 litho->str_exp = 3.0;     /*  stress exponent */
-litho->str_pow = 7.e-14;  /*  stress amplitude factor for power law */
+litho->str_pow = 7.0e-14;  /*  stress amplitude factor for power law */
 litho->str_dor = 8.5e9;   /* stress constant for Dorn law */
 litho->sren_dor= 5.7e11;  /* strain rate factor for Dorn law */
-litho->qp      = 5.23e5;  /*  activation energy for power law */
+litho->qp      = 5.20e5;  /*  activation energy for power law */
 litho->qd      = 5.49e5;  /*  activation energy for Dorn */
 
 /* parameters to be solved for when finding effective rigidity */
