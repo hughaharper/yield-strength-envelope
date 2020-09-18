@@ -8,25 +8,25 @@
 double byerlee_(Litho *l, double *z, double *obp, unsigned int *bysw)
 {
         double byerstr;
-        
+
         if(*bysw == 1){
-			/* tensional regime */
+			  /* tensional regime */
             if (*obp <= 5.299e8){
                  byerstr = *obp*l->byerlpt;
-        	}
-        	else {
+        	  }
+        	  else {
         	     byerstr = l->byergst + *obp*l->byergpt;
-        	} 
+        	  }
         }
         else {
             /* compressional regime  */
             if (*obp <= 1.132e8){
                  byerstr = -1.0*(*obp*l->byergpc);
-        	}
-        	else {
+        	  }
+        	  else {
         	     byerstr = -1.0*(l->byerlsc + *obp*l->byerlpc);
-        	} 
-        }   
-        
+        	  }
+        }
+
     return byerstr;
 }

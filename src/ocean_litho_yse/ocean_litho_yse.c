@@ -21,9 +21,14 @@ int main (int argc, char **argv)
   double tc = 7.e3; /* 7 km crustal thickness */
   /* flow law for wet olivine, Karato et al. 1986 */
   /* change this to flow law for Gabbro */
-  double wo_exp = 3.0;
+  /*double wo_exp = 3.0;
   double wo_pow = 1.9e-15;
-  double wo_qp = 4.2e5;
+  double wo_qp = 4.2e5; */
+
+  /* diabase */
+  double wo_exp = 4.7;
+  double wo_pow = 5.0e-28;
+  double wo_qp = 4.82e5;
 
   /* switches */
   unsigned int wcsw = 1; /* don't include water column overburden = 0, include = 1 */
@@ -56,7 +61,6 @@ int main (int argc, char **argv)
   lptr->str_exp = wo_exp;
   lptr->str_pow = wo_pow;
   lptr->qp = wo_qp;
-  lptr->diff = 3*lptr->diff;
 
   for(j=0;j<nz;j++) {
     z=((double)j+0.5)*dz;
