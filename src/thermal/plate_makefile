@@ -1,5 +1,5 @@
-PROG = sleep_cooling 
-CSRCS = sleep_cooling.c 
+PROG = plate_cooling 
+CSRCS = plate_cooling.c 
 
 FSRCS =
 FC = 
