@@ -7,6 +7,7 @@
 void set_litho_defaults_(Litho *);
 void print_litho_defaults_(Litho *);
 double temp_plt_(Litho *, double *, double *);
+double temp_sleep_(Litho *, double *, double *);
 double depth_sflr_(Litho *, double *);
 double pressure_(Litho *, double *, double *, unsigned int *);
 double byerlee_(Litho *, double *, double *, unsigned int *);
@@ -35,6 +36,7 @@ int main (int argc, char **argv)
   unsigned int bysw; /* compression = 0, tension = 1 */
   unsigned int dusw; /* dorn law = 0, power law = 1 */
   unsigned int reset = 0; /* for switching from crust to mantle */
+  unsigned int tesw = 1; /* switch between thermal models, 0 = plate, 1 = sleep */
 
   Litho l;
   Litho *lptr = &l; /* pointer to litho structure */
@@ -51,7 +53,8 @@ int main (int argc, char **argv)
   /*print_litho_defaults_(lptr); */
 
   dsf=depth_sflr_(lptr,&age);
-
+  /* set spreading rate */
+  lptr->usp = 20;
   zp = lptr->dp;
   dz = zp/nz;
   dusw = 1;
@@ -76,7 +79,13 @@ int main (int argc, char **argv)
       reset = 1;
     }
 
-    temp=temp_plt_(lptr,&z,&age);
+    if (tesw == 1) {
+      temp=temp_sleep_(lptr,&z,&age);
+    }
+    else {
+      temp=temp_plt_(lptr,&z,&age);
+    }
+
     obp=pressure_(lptr,&z,&dsf,&wcsw);
     dustr=ductile_(lptr,&temp,&dusw);
 
