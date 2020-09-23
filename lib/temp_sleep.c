@@ -12,13 +12,13 @@ double temp_sleep_(Litho *l, double *z, double *age)
   double rhoc,kappa,gamma;
   double T_c,T_seg,T_m,zp,x,u;
 
-  double z_seg=33.e3,z_crust=7.e3,latent_h=1.028e9,conduct=2.5104;
+  double z_seg=33.e3,z_crust=6.e3,latent_h=1.028e9,conduct=2.5104;
   double l_adiab=1.e-3,d_adiab=0.3e-3,melt_grad=3.e-3; /* alpha, beta */
 
   u = 1e-2*l->usp/365/24/60/60; /* cm/yr to m/s */
   x = l->usp**age*1e4; /* convert cm/yr to m/yr, Myr to yr */
   kappa = l->diff;
-  rhoc = conduct*kappa;
+  rhoc = conduct/kappa;
   zp = l->dp;
   T_m = l->tm;
   gamma = 1 - (d_adiab*zp)/(T_m);
