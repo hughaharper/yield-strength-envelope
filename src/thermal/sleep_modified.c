@@ -9,14 +9,16 @@ void set_litho_defaults_(Litho *);
 int main (int argc, char **argv)
 {
   /* variables */
-  int i,j,nz=1000,nx=100,m,k;
-  double age,d_age,x,dx,u,z,zp,dz;
+  int i,j,nz,nx,m,k;
+  double x,dx,z,dz,zp,u;
   double T_all,T_homo,T_part,T_temp;
-  double max_age;
   double M,R_p,a_m,A_m,B_m,B_m1,B_m2,B_m3,B_m4;
-  double x_Q,z_Q,Q_d,b_m,g_a,g_b,g_c;
+  double b_m,g_a,g_b,g_c;
+  int nQ=17;
+  double x_Q[nQ],z_Q[nQ],Q_d[nQ]; /* how to make this arbitrary? */
   double rhoc,kappa,gamma;
   double T_c,T_seg,T_m;
+  FILE *heat_sinks;
 
   Litho l;
   Litho *lptr = &l;
@@ -26,13 +28,12 @@ int main (int argc, char **argv)
   double z_seg=33e3,z_crust=5e3,latent_h=1.028e9,conduct=2.5104;
   double l_adiab=1e-3,d_adiab=0.3e-3,melt_grad=3e-3; /* alpha, beta */
 
-  if(argc < 3){
-    printf("\n Usage sleep_cooling max_age half_spreading_rate flags\n");
+  if(argc < 2){
+    printf("\n Usage sleep_cooling half_spreading_rate flags\n");
     exit(-1);
   }
 
-  max_age = atof(argv[1]); /* age in Myr */
-  u = atof(argv[2])/365/24/60/60; /* rate in m/yr, convert to m/s */
+  u = atof(argv[1])/365/24/60/60; /* rate in m/yr, convert to m/s */
 
   set_litho_defaults_(lptr);
 
@@ -48,9 +49,22 @@ int main (int argc, char **argv)
   T_c = T_m*(gamma - ((gamma*z_crust)/zp) + (z_crust/zp));
   T_seg = T_m*(gamma - ((gamma*z_seg)/zp) + (z_seg/zp));
 
-  dz = zp/nz;
-  d_age = max_age/nx; /* d_age in Myr */
-  dx = d_age*SPMYR*u;
+  dz = 200; /* z spacing */
+  dx = 200; /* x spacing */
+  nz = (int) 30000/dz; /* model space only 30km by 30km, no reason to go to 125 km depth */
+  nx = (int) 30000/dx;
+  fprintf(stderr,"nz: %d, nx: %d\n",nz,nx);
+
+  /* read in heat sink data */
+  heat_sinks = fopen("heat_sinks.xz","r");
+  if (heat_sinks == NULL){
+    fprintf(stderr,"Error Reading File\n");
+    exit(-1);
+  }
+  for(j=0;j<nQ;j++){
+    fscanf(heat_sinks,"%lf %lf %lf",&x_Q[j],&z_Q[j],&Q_d[j]);
+    fprintf(stderr,"x_pos: %lf z_pos: %lf Q:%lf\n",x_Q[j],z_Q[j],Q_d[j]);
+  }
 
   fprintf(stdout,"0 ");
   for(j=0;j<nz;j++) {
@@ -59,22 +73,21 @@ int main (int argc, char **argv)
   }
 
   for(j=0;j<nx;j++) {
-    /* loop through x distance (age) */
-    age = ((double)j+0.5)*d_age;
-    x = ((double)j+0.5)*dx;
+    /* loop through x distance */
+    x = ((double) j)*dx;
 
-    fprintf(stdout,"\n%lf ",age);
+    fprintf(stdout,"\n%lf ",x);
 
     for(i=0;i<nz;i++) {
       /* loop thru depths */
-      z = ((double)i+0.5)*dz;
+      z = ((double) i)*dz;
 
       /* evaluate initial terms */
       T_homo = 0;
       R_p = (2*kappa*PI)/(u*zp);
 
       /* Compute the homogeneous solutions */
-      for(m=1;m<101;m++){
+      for(m=1;m<501;m++){
         M = (double) m;
         a_m = (u/(2*kappa))*(1 - sqrt(1 + (R_p*R_p*M*M)));
 
@@ -95,21 +108,20 @@ int main (int argc, char **argv)
 
       /* Compute the particular solution for heat sinks */
       T_part = 0;
-      for(k=1;k<2;k++){
-        x_Q = 210; /* x pos of sink */
-        z_Q = 250; /* z pos of sink */
-        Q_d = 20; /* magnitude of heat flow, negative is sink */
+      /* for k=0 to k< no. of sinks */
+      for(k=0;k<nQ;k++){
+        /* arrays of heat sink positions */
         T_temp = 0;
-        for(m=1;m<101;m++){
+        for(m=1;m<501;m++){
           M = (double) m;
           a_m = (u/(2*kappa))*(1 - sqrt(1 + (R_p*R_p*M*M)));
           b_m = (u/(2*kappa))*(1 + sqrt(1 + (R_p*R_p*M*M)));
-          g_a = (2*Q_d)/(kappa*zp*(b_m-a_m));
-          g_b = sin((M*PI*z_Q)/zp);
-          if (x < x_Q) {
-            g_c = (exp(b_m*x) - exp(a_m*x))*exp(-1*b_m*x_Q);
-          } else {
-            g_c = (exp(-1*a_m*x_Q) - exp(-1*b_m*x_Q))*exp(a_m*x);
+          g_a = (2*Q_d[k])/(kappa*zp*(b_m-a_m));
+          g_b = sin((M*PI*z_Q[k])/zp);
+          if (x < x_Q[k]) {
+            g_c = (exp(b_m*x) - exp(a_m*x))*exp(-1*b_m*x_Q[k]);
+          } else if (x > x_Q[k]) {
+            g_c = (exp(-1*a_m*x_Q[k]) - exp(-1*b_m*x_Q[k]))*exp(a_m*x);
           }
 
           T_temp = T_temp + g_a*g_b*g_c*sin((M*PI*z)/zp);

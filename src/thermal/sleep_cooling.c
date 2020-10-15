@@ -9,9 +9,8 @@ void set_litho_defaults_(Litho *);
 int main (int argc, char **argv)
 {
   /* variables */
-  int i,j,nz=1000,nx=100,m;
-  double age,d_age,x,dx,u,z,zp,dz,temp,t_ta,t_tb;
-  double max_age;
+  int i,j,nz,nx,m;
+  double x,dx,u,z,zp,dz,temp,t_ta,t_tb;
   double M,R_p,a_m,A_m,B_m,B_m1,B_m2,B_m3,B_m4;
   double rhoc,kappa,gamma;
   double T_c,T_seg,T_m;
@@ -24,13 +23,12 @@ int main (int argc, char **argv)
   double z_seg=33e3,z_crust=5e3,latent_h=1.028e9,conduct=2.5104;
   double l_adiab=1e-3,d_adiab=0.3e-3,melt_grad=3e-3; /* alpha, beta */
 
-  if(argc < 3){
-    printf("\n Usage sleep_cooling max_age half_spreading_rate flags\n");
+  if(argc < 2){
+    fprintf(stderr,"\n Usage sleep_cooling half_spreading_rate flags\n");
     exit(-1);
   }
 
-  max_age = atof(argv[1]); /* age in Myr */
-  u = atof(argv[2])/365/24/60/60; /* rate in m/yr, convert to m/s */
+  u = atof(argv[1])/365/24/60/60; /* rate in m/yr, convert to m/s */
 
   set_litho_defaults_(lptr);
 
@@ -46,9 +44,11 @@ int main (int argc, char **argv)
   T_c = T_m*(gamma - ((gamma*z_crust)/zp) + (z_crust/zp));
   T_seg = T_m*(gamma - ((gamma*z_seg)/zp) + (z_seg/zp));
 
-  dz = zp/nz;
-  d_age = max_age/nx; /* d_age in Myr */
-  dx = d_age*SPMYR*u;
+  dz = 200;
+  dx = 500;
+  nz = (int) zp/dz;
+  nx = (int) 30000/dx;
+  fprintf(stderr,"nz: %d, nx: %d\n",nz,nx);
 
   fprintf(stdout,"0 ");
   for(j=0;j<nz;j++) {
@@ -58,10 +58,9 @@ int main (int argc, char **argv)
 
   for(j=0;j<nx;j++) {
     /* loop through x distance (age) */
-    age = ((double)j+0.5)*d_age;
     x = ((double)j+0.5)*dx;
 
-    fprintf(stdout,"\n%lf ",age);
+    fprintf(stdout,"\n%lf ",x);
 
     for(i=0;i<nz;i++) {
       /* loop thru depths */
@@ -86,7 +85,7 @@ int main (int argc, char **argv)
 
         t_ta = A_m*B_m*sin((M*PI*z)/zp)*exp(a_m*x);
 
-        /* steady state solution */
+        /* constant intrusion temp solution */
         /*t_ta = A_m*sin((M*PI*z)/zp)*exp(a_m*x)/M; */
 
         t_tb = t_tb + t_ta;
@@ -95,7 +94,7 @@ int main (int argc, char **argv)
 
       temp = (1/(u*rhoc))*t_tb + ((T_m*z)/zp);
 
-      /* steady state solution */
+      /* constant intrusion temp solution */
       /*temp = ((T_m*z)/zp) + ((2*T_m)/PI)*t_tb; */
 
       fprintf(stdout,"%lf ",temp);
