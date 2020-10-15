@@ -14,8 +14,6 @@ int main (int argc, char **argv)
   double T_all,T_homo,T_part,T_temp;
   double M,R_p,a_m,A_m,B_m,B_m1,B_m2,B_m3,B_m4;
   double b_m,g_a,g_b,g_c;
-  int nQ=17;
-  double x_Q[nQ],z_Q[nQ],Q_d[nQ]; /* how to make this arbitrary? */
   double rhoc,kappa,gamma;
   double T_c,T_seg,T_m;
   FILE *heat_sinks;
@@ -55,16 +53,32 @@ int main (int argc, char **argv)
   nx = (int) 30000/dx;
   fprintf(stderr,"nz: %d, nx: %d\n",nz,nx);
 
+  /* ------------------------------------------------------------------------ */
   /* read in heat sink data */
   heat_sinks = fopen("heat_sinks.xz","r");
   if (heat_sinks == NULL){
     fprintf(stderr,"Error Reading File\n");
     exit(-1);
   }
+
+  // Count Lines
+  char cr;
+  int nQ = 0;
+  cr = getc(heat_sinks);
+  while( cr != EOF ) {
+    if ( cr == '\n' ) {
+      nQ++;
+    }
+    cr = getc(heat_sinks);
+  }
+  rewind(heat_sinks);
+
+  double x_Q[nQ],z_Q[nQ],Q_d[nQ]; /* how to make this arbitrary? */
   for(j=0;j<nQ;j++){
     fscanf(heat_sinks,"%lf %lf %lf",&x_Q[j],&z_Q[j],&Q_d[j]);
     fprintf(stderr,"x_pos: %lf z_pos: %lf Q:%lf\n",x_Q[j],z_Q[j],Q_d[j]);
   }
+  /* ------------------------------------------------------------------------ */
 
   fprintf(stdout,"0 ");
   for(j=0;j<nz;j++) {
