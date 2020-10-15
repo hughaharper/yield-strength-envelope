@@ -1,16 +1,16 @@
 clear;
 % script to drive plate_cooling and plot the isotherms
 age = 10; % Myr, max age of model
-rate = 0.02; % rate in m / yr
+rate = 0.015; % rate in m / yr
 % add in a flag for thermal model used
 % 1 is plate model, 2 is sleep model
-model=3;
+model=2;
 
 switch model
     case 1
         runcmd=strcat('plate_cooling', 32, num2str(age), 32,'>', 32, 'out.temp');
     case 2
-        runcmd=strcat('sleep_cooling', 32, num2str(age), 32, num2str(rate) , 32, '>', 32, 'out.temp');
+        runcmd=strcat('sleep_cooling', 32, num2str(rate) , 32, '>', 32, 'out.temp');
     case 3
         runcmd=strcat('sleep_modified', 32, num2str(rate) , 32, '>', 32, 'out.temp');
     otherwise

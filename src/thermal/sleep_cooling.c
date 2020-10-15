@@ -45,32 +45,32 @@ int main (int argc, char **argv)
   T_seg = T_m*(gamma - ((gamma*z_seg)/zp) + (z_seg/zp));
 
   dz = 200;
-  dx = 500;
-  nz = (int) zp/dz;
+  dx = 200;
+  nz = (int) 30000/dz;
   nx = (int) 30000/dx;
   fprintf(stderr,"nz: %d, nx: %d\n",nz,nx);
 
   fprintf(stdout,"0 ");
   for(j=0;j<nz;j++) {
-    z=((double)j+0.5)*dz;
+    z=((double)j)*dz;
     fprintf(stdout,"%lf ",z);
   }
 
   for(j=0;j<nx;j++) {
     /* loop through x distance (age) */
-    x = ((double)j+0.5)*dx;
+    x = ((double)j)*dx;
 
     fprintf(stdout,"\n%lf ",x);
 
     for(i=0;i<nz;i++) {
       /* loop thru depths */
-      z = ((double)i+0.5)*dz;
+      z = ((double)i)*dz;
 
       /* evaluate initial terms */
       t_tb = 0;
       R_p = (2*kappa*PI)/(u*zp);
 
-      for(m=1;m<101;m++){
+      for(m=1;m<501;m++){
         M = (double) m;
         a_m =(u/(2*kappa))*(1 - sqrt(1 + (R_p*R_p*M*M)));
 

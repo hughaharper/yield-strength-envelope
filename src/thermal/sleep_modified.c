@@ -68,7 +68,7 @@ int main (int argc, char **argv)
 
   fprintf(stdout,"0 ");
   for(j=0;j<nz;j++) {
-    z=((double)j+0.5)*dz;
+    z=((double)j)*dz;
     fprintf(stdout,"%lf ",z);
   }
 
