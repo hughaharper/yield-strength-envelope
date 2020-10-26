@@ -7,7 +7,7 @@
 void set_litho_defaults_(Litho *);
 void print_litho_defaults_(Litho *);
 double temp_plt_(Litho *, double *, double *);
-double temp_sleep_(Litho *, double *, double *);
+double temp_sleep_(Litho *, double *, double *, unsigned int *);
 double depth_sflr_(Litho *, double *);
 double pressure_(Litho *, double *, double *, unsigned int *);
 double byerlee_(Litho *, double *, double *, unsigned int *);
@@ -36,6 +36,7 @@ int main (int argc, char **argv)
   unsigned int dusw; /* dorn law = 0, power law = 1 */
   unsigned int reset = 0; /* for switching from crust to mantle */
   unsigned int tesw = 1; /* switch between thermal models, 0 = plate, 1 = sleep */
+  unsigned int hssw = 0; /* heat sinks, models hydrothermal circulation. 0 = no, 1 = yes */
 
   Litho l;
   Litho *lptr = &l; /* pointer to litho structure */
@@ -78,7 +79,7 @@ int main (int argc, char **argv)
     }
 
     if (tesw == 1) {
-      temp=temp_sleep_(lptr,&z,&age);
+      temp=temp_sleep_(lptr,&z,&age,&hssw);
     }
     else {
       temp=temp_plt_(lptr,&z,&age);

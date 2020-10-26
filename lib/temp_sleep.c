@@ -4,13 +4,18 @@
 /* compute lithospheric temperature (degree C) */
 /*--------------------------------*/
 
-double temp_sleep_(Litho *l, double *z, double *age)
+double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
 {
-  int i,nsum=50;
+  int i,k,nsum=501;
   double j,R_p,a_m,A_m,B_m,B_m1,B_m2,B_m3,B_m4;
-  double t_ta, t_tb, temp;
+  double T_temp, T_homo, T_full;
   double rhoc,kappa,gamma;
   double T_c,T_seg,T_m,zp,x,u;
+  double T_part,b_m,g_a,g_b,g_c;
+  FILE *heat_sinks;
+  char cr;
+  int nQ = 0;
+  double x_Q[nQ],z_Q[nQ],Q_d[nQ]; /* how to make this arbitrary? */
 
   double z_seg=33.e3,z_crust=6.e3,latent_h=1.028e9,conduct=2.5104;
   double l_adiab=1.e-3,d_adiab=0.3e-3,melt_grad=3.e-3; /* alpha, beta */
@@ -28,7 +33,32 @@ double temp_sleep_(Litho *l, double *z, double *age)
 
 
   R_p = (2*kappa*PI)/(u*zp);
-  t_tb = 0;
+  T_homo = 0;
+
+  /* ------------------------------------------------------------------------ */
+  if (*hssw == 1) {
+    /* read in heat sink data */
+    heat_sinks = fopen("heat_sinks.xz","r");
+    if (heat_sinks == NULL){
+      fprintf(stderr,"Error Reading Heat Sinks File\n");
+      exit(-1);
+    }
+
+    // Count Lines
+    cr = getc(heat_sinks);
+    while( cr != EOF ) {
+      if ( cr == '\n' ) {
+        nQ++;
+      }
+      cr = getc(heat_sinks);
+    }
+    rewind(heat_sinks);
+
+    for(i=0;i<nQ;j++){
+      fscanf(heat_sinks,"%lf %lf %lf",&x_Q[i],&z_Q[i],&Q_d[i]);
+    }
+  }
+  /* ------------------------------------------------------------------------ */
 
   for(i=0;i<nsum;i++){
     j=(double)(i+1);
@@ -44,12 +74,37 @@ double temp_sleep_(Litho *l, double *z, double *age)
 
     A_m = 2/(1 + sqrt(1 + (R_p*R_p*j*j)));
 
-    t_ta = A_m*B_m*sin((*z*j*PI)/zp)*exp(a_m*x);
+    T_temp = A_m*B_m*sin((*z*j*PI)/zp)*exp(a_m*x);
 
-    t_tb = t_tb + t_ta;
+    T_homo = T_homo + T_temp;
   }
 
-  temp = (1/(u*rhoc))*t_tb + ((*z*T_m)/zp);
+  T_part = 0;
+  /* Add heat sinks if flag is there */
+  if (*hssw == 1) {
+    /* for k=0 to k< no. of sinks */
+    for(k=0;k<nQ;k++){
+      /* arrays of heat sink positions */
+      T_temp = 0;
+      for(i=0;i<501;i++){
+        j = (double)(i+1);
+        a_m = (u/(2*kappa))*(1 - sqrt(1 + (R_p*R_p*j*j)));
+        b_m = (u/(2*kappa))*(1 + sqrt(1 + (R_p*R_p*j*j)));
+        g_a = (2*Q_d[k])/(kappa*zp*(b_m-a_m));
+        g_b = sin((j*PI*z_Q[k])/zp);
+        if (x < x_Q[k]) {
+          g_c = (exp(b_m*x) - exp(a_m*x))*exp(-1*b_m*x_Q[k]);
+        } else if (x > x_Q[k]) {
+          g_c = (exp(-1*a_m*x_Q[k]) - exp(-1*b_m*x_Q[k]))*exp(a_m*x);
+        }
 
-  return temp;
+        T_temp = T_temp + g_a*g_b*g_c*sin((j*PI**z)/zp);
+      } /* end sum loop */
+      T_part = T_part + T_temp;
+    } /* end loop thru heat sinks */
+  }
+
+  T_full = (1/(u*rhoc))*T_homo + ((*z*T_m)/zp) + T_part;
+
+  return T_full;
 }
