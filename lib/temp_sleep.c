@@ -14,14 +14,14 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
   double T_part,b_m,g_a,g_b,g_c;
   FILE *heat_sinks;
   char cr;
-  int nQ = 0;
-  double x_Q[nQ],z_Q[nQ],Q_d[nQ]; /* how to make this arbitrary? */
+  int nQ;
+  double x_Q,z_Q,Q_d; /* how to make this arbitrary? */
 
   double z_seg=33.e3,z_crust=6.e3,latent_h=1.028e9,conduct=2.5104;
   double l_adiab=1.e-3,d_adiab=0.3e-3,melt_grad=3.e-3; /* alpha, beta */
 
-  u = 1e-2*l->usp/365/24/60/60; /* cm/yr to m/s */
-  x = l->usp**age*1e4; /* convert cm/yr to m/yr, Myr to yr */
+  u = l->usp/365/24/60/60; /* m/yr to m/s */
+  x = l->usp**age*1e6; /* convert m/yr to m/yr, Myr to yr */
   kappa = l->diff;
   rhoc = conduct/kappa;
   zp = l->dp;
@@ -34,7 +34,7 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
 
   R_p = (2*kappa*PI)/(u*zp);
   T_homo = 0;
-
+  fprintf(stderr,"Position: x - %.2f, z - %.2f\n",x,*z);
   /* ------------------------------------------------------------------------ */
   if (*hssw == 1) {
     /* read in heat sink data */
@@ -54,10 +54,8 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
     }
     rewind(heat_sinks);
 
-    for(i=0;i<nQ;j++){
-      fscanf(heat_sinks,"%lf %lf %lf",&x_Q[i],&z_Q[i],&Q_d[i]);
-    }
   }
+
   /* ------------------------------------------------------------------------ */
 
   for(i=0;i<nsum;i++){
@@ -79,32 +77,33 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
     T_homo = T_homo + T_temp;
   }
 
-  T_part = 0;
+  T_part = 0.;
   /* Add heat sinks if flag is there */
   if (*hssw == 1) {
     /* for k=0 to k< no. of sinks */
     for(k=0;k<nQ;k++){
+      fscanf(heat_sinks,"%lf %lf %lf",&x_Q,&z_Q,&Q_d);
       /* arrays of heat sink positions */
-      T_temp = 0;
-      for(i=0;i<501;i++){
-        j = (double)(i+1);
+      T_temp = 0.;
+      for(i=1;i<201;i++){
+        j = (double)(i);
         a_m = (u/(2*kappa))*(1 - sqrt(1 + (R_p*R_p*j*j)));
         b_m = (u/(2*kappa))*(1 + sqrt(1 + (R_p*R_p*j*j)));
-        g_a = (2*Q_d[k])/(kappa*zp*(b_m-a_m));
-        g_b = sin((j*PI*z_Q[k])/zp);
-        if (x < x_Q[k]) {
-          g_c = (exp(b_m*x) - exp(a_m*x))*exp(-1*b_m*x_Q[k]);
-        } else if (x > x_Q[k]) {
-          g_c = (exp(-1*a_m*x_Q[k]) - exp(-1*b_m*x_Q[k]))*exp(a_m*x);
+        g_a = (2*Q_d)/(kappa*zp*(b_m-a_m));
+        g_b = sin((j*PI*z_Q)/zp);
+        if (x < x_Q) {
+          g_c = (exp(b_m*x) - exp(a_m*x))*exp(-1*b_m*x_Q);
         }
-
+        else if (x > x_Q) {
+          g_c = (exp(-1*a_m*x_Q) - exp(-1*b_m*x_Q))*exp(a_m*x);
+        }
         T_temp = T_temp + g_a*g_b*g_c*sin((j*PI**z)/zp);
       } /* end sum loop */
       T_part = T_part + T_temp;
     } /* end loop thru heat sinks */
+    fclose(heat_sinks);
   }
 
   T_full = (1/(u*rhoc))*T_homo + ((*z*T_m)/zp) + T_part;
-
-  return T_full;
+  return(T_full);
 }
