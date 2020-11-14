@@ -9,7 +9,7 @@ FC = gfortran
 OBJECTS=	fourt.o		readgrd.o	writegrd.o	merc.o\
 		moment.o	set_litho_defaults.o	temp_plt.o  temp_sleep.o\
 		depth_sflr.o	pressure.o	byerlee.o	ductile.o\
-		elbendstress.o	yse_moment.o	mechthk.o	yse_moment_old.o
+		elbendstress.o	yse_moment.o	mechthk.o	yield_stress.o
 
 liba:	$(OBJECTS)
 	ar rv libflex.a $(OBJECTS)
