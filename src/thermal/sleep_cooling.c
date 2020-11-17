@@ -44,8 +44,8 @@ int main (int argc, char **argv)
   T_c = T_m*(gamma - ((gamma*z_crust)/zp) + (z_crust/zp));
   T_seg = T_m*(gamma - ((gamma*z_seg)/zp) + (z_seg/zp));
 
-  dz = 200;
-  dx = 200;
+  dz = 100;
+  dx = 100;
   nz = (int) 30000/dz;
   nx = (int) 30000/dx;
   fprintf(stderr,"nz: %d, nx: %d\n",nz,nx);

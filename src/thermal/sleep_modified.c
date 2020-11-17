@@ -38,6 +38,7 @@ int main (int argc, char **argv)
   /*kappa = lptr->diff; */
   rhoc = 3.807e6;
   kappa = conduct/rhoc;
+  latent_h = 0;
   zp = lptr->dp;
   T_m = lptr->tm;
   zp = 1e5;
@@ -47,8 +48,8 @@ int main (int argc, char **argv)
   T_c = T_m*(gamma - ((gamma*z_crust)/zp) + (z_crust/zp));
   T_seg = T_m*(gamma - ((gamma*z_seg)/zp) + (z_seg/zp));
 
-  dz = 200; /* z spacing */
-  dx = 200; /* x spacing */
+  dz = 100; /* z spacing */
+  dx = 100; /* x spacing */
   nz = (int) 30000/dz; /* model space only 30km by 30km, no reason to go to 125 km depth */
   nx = (int) 30000/dx;
   fprintf(stderr,"nz: %d, nx: %d\n",nz,nx);
@@ -88,13 +89,13 @@ int main (int argc, char **argv)
 
   for(j=0;j<nx;j++) {
     /* loop through x distance */
-    x = ((double) j)*dx;
+    x = ((double) j + 1)*dx;
 
     fprintf(stdout,"\n%lf ",x);
 
     for(i=0;i<nz;i++) {
       /* loop thru depths */
-      z = ((double) i)*dz;
+      z = ((double) i + 0.5)*dz;
 
       /* evaluate initial terms */
       T_homo = 0;
@@ -114,7 +115,8 @@ int main (int argc, char **argv)
 
         A_m = 2/(1 + sqrt(1 + (R_p*R_p*M*M)));
 
-        T_temp = A_m*B_m*sin((M*PI*z)/zp)*exp(a_m*x);
+        /*T_temp = A_m*B_m*sin((M*PI*z)/zp)*exp(a_m*x); */
+        T_temp = A_m*sin((M*PI*z)/zp)*exp(a_m*x)/M;
 
         T_homo = T_homo + T_temp;
 
@@ -144,7 +146,8 @@ int main (int argc, char **argv)
       } /* end loop thru heat sinks */
 
       /* Full solution */
-      T_all = (1/(u*rhoc))*T_homo + T_part + ((T_m*z)/zp);
+      /*T_all = (1/(u*rhoc))*T_homo + T_part + ((T_m*z)/zp); */
+      T_all = ((T_m*z)/zp) + ((2*T_m)/PI)*T_homo + T_part;
 
       fprintf(stdout,"%lf ",T_all);
     } /* end depth loop */
