@@ -7,7 +7,8 @@ int main (int argc, char *argv[])
 {
   int i,j,nz,nx;
   double age_offset, spr_rate, spr_rate_ms;
-  double dz,dx,z,x,phi;
+  double dz,dx,z,x_a,x_b,phi;
+  double ystr_a,ystr_b;
   double zmax=25000,xmax;
 
   double *ystr;
@@ -72,8 +73,12 @@ int main (int argc, char *argv[])
   for(i=0;i<nz;i++){
     z = ((double)i+0.5)*dz;
     for(j=0;j<nx;j++){
-      x =((double)j+0.5)*dx;
-      ystr[i*nx + j] = yield_stress_(lptr,&z,&x,&wcsw,&tesw,&hssw);
+      x_a =((double)j+0.5)*dx;
+      x_b = xmax - x_a;
+      // Need to compute 2 yield stresses, for either side of transform...
+      ystr_a = yield_stress_(lptr,&z,&x_a,&wcsw,&tesw,&hssw);
+      ystr_b = yield_stress_(lptr,&z,&x_b,&wcsw,&tesw,&hssw);
+      ystr[i*nx + j] = fmax(ystr_a,ystr_b);
       phi = phi + -1*ystr[i*nx + j]*2*spr_rate_ms*dx*dz;
     }
   }
