@@ -78,7 +78,8 @@ int main (int argc, char *argv[])
       // Need to compute 2 yield stresses, for either side of transform...
       ystr_a = yield_stress_(lptr,&z,&x_a,&wcsw,&tesw,&hssw);
       ystr_b = yield_stress_(lptr,&z,&x_b,&wcsw,&tesw,&hssw);
-      ystr[i*nx + j] = fmax(ystr_a,ystr_b);
+      // ystr is negative, so need to take the minimum
+      ystr[i*nx + j] = fmin(ystr_a,ystr_b);
       phi = phi + -1*ystr[i*nx + j]*2*spr_rate_ms*dx*dz;
     }
   }
