@@ -28,7 +28,7 @@ double yield_stress_(Litho *l, double *zpt, double *xpt, unsigned int *wcsw, \
   dsf = depth_sflr_(l,&age);
 
   // choose flow law based on z > crustal thickness
-  if (*zpt <= l-> dc) {
+  if (*zpt <= l->dc) {
     // flow law for wet olivine
     l->str_exp = 3.0;
     l->str_pow = 1.9e-15;

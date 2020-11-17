@@ -34,7 +34,6 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
 
   R_p = (2*kappa*PI)/(u*zp);
   T_homo = 0;
-  fprintf(stderr,"Position: x - %.2f, z - %.2f\n",x,*z);
   /* ------------------------------------------------------------------------ */
   if (*hssw == 1) {
     /* read in heat sink data */
