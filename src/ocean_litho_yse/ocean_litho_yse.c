@@ -19,23 +19,13 @@ int main (int argc, char *argv[])
   double age,z,dz,dsf,temp,obp,zp,zmt,bystr,dustr;
   double ystrp,ystrm;
 
-  /* flow law for wet olivine, Karato et al. 1986 */
-  /* change this to flow law for Gabbro */
-  double wo_exp = 3.0;
-  double wo_pow = 1.9e-15;
-  double wo_qp = 4.2e5;
-
-  /* diabase */
-  /*double wo_exp = 4.7;
-  double wo_pow = 5.0e-28;
-  double wo_qp = 4.82e5; */
-
   /* switches */
   unsigned int bysw; /* compression = 0, tension = 1 */
   unsigned int dusw; /* dorn law = 0, power law = 1 */
   unsigned int wcsw = 1; /* don't include water column overburden = 0, include = 1 */
   unsigned int tesw = 1; /* switch between thermal models, 0 = plate, 1 = sleep */
   unsigned int hssw = 0; /* heat sinks, models hydrothermal circulation. 0 = no, 1 = yes */
+  unsigned int flow = 1; /* crustal flow, 0 = same as mantle, 1 = wet olivine, 2 = diabase */
 
   unsigned int reset = 0; /* for switching from crust to mantle */
 
@@ -62,9 +52,12 @@ int main (int argc, char *argv[])
       else if(strncmp(argv[i],"hssw",4) == 0) {
         hssw = atoi(argv[i+1]);
       }
+      else if(strncmp(argv[i],"flow",4) == 0) {
+        flow = atoi(argv[i+1]);
+      }
       else {
         fprintf(stderr,"Not a valid flag\n");
-        fprintf(stderr,"\n Usage ocean_litho_yse age (wcsw 0/1 tesw 0/1 hssw 0/1) \n");
+        fprintf(stderr,"\n Usage ocean_litho_yse age (wcsw 0/1 tesw 0/1 hssw 0/1 flow 0/1/2) \n");
         exit(-1);
       }
       i+=2;
@@ -83,9 +76,23 @@ int main (int argc, char *argv[])
   zmt = zp; /* Mechanical thickness is plate thickness initially*/
 
   /* adjust parameters for the crust */
-  lptr->str_exp = wo_exp;
-  lptr->str_pow = wo_pow;
-  lptr->qp = wo_qp;
+  if (flow == 1){
+    // wet olivine, Karato et al. 1986
+    lptr->str_exp = 3.0;
+    lptr->str_pow = 1.9e-15;
+    lptr->qp = 4.2e5;
+  }
+  else if (flow == 2){
+    // diabase, citation needed
+    lptr->str_exp = 4.7;
+    lptr->str_pow = 5.0e-28;
+    lptr->qp = 4.82e5;
+  }
+  else {
+    lptr->str_exp = 3.5;
+    lptr->str_pow = 2.4e-16;
+    lptr->qp = 5.40e5;
+  }
 
   /*for(j=0;j<nz;j++) { */
   /* instead of going all the way to the base, just go to 25 km */
