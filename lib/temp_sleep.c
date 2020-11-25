@@ -14,7 +14,7 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
   double T_part,b_m,g_a,g_b,g_c;
   FILE *heat_sinks;
   char cr;
-  int nQ;
+  int nQ = 0;
   double x_Q,z_Q,Q_d;
 
   double z_seg=33.e3,z_crust=6.e3,latent_h=1.028e9,conduct=2.5104;
@@ -88,6 +88,7 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
         } else if (x > x_Q) {
           g_c = (exp(-1*a_m*x_Q) - exp(-1*b_m*x_Q))*exp(a_m*x);
         }
+
         T_temp = T_temp + g_a*g_b*g_c*sin((j*PI**z)/zp);
       } /* end sum loop */
       T_part = T_part + T_temp;
