@@ -77,7 +77,7 @@ double temp_sleep_(Litho *l, double *z, double *age, unsigned int *hssw)
       fscanf(heat_sinks,"%lf %lf %lf",&x_Q,&z_Q,&Q_d);
       /* arrays of heat sink positions */
       T_temp = 0;
-      for(i=1;i<201;i++){
+      for(i=1;i<251;i++){
         j = (double) i;
         a_m = (u/(2*kappa))*(1 - sqrt(1 + (R_p*R_p*j*j)));
         b_m = (u/(2*kappa))*(1 + sqrt(1 + (R_p*R_p*j*j)));
