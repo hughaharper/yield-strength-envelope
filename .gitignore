@@ -1,3 +1,5 @@
 src/*/*temp
 src/*/.ipynb*/
 src/*/*.o
+*.png
+*.pdf
